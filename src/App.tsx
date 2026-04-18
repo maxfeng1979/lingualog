@@ -2,6 +2,7 @@ import './App.css';
 import { useState } from 'react';
 import { WritePage } from './components/WritePage';
 import { ResultPage } from './components/ResultPage';
+import { SettingsPage } from './components/SettingsPage';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { LanguageCode } from './constants/languages';
 import { DiaryEntry } from './types/ai';
@@ -9,6 +10,7 @@ import { useAI } from './hooks/useAI';
 import { useTTS } from './hooks/useTTS';
 
 function AppInner() {
+  const [page, setPage] = useState<'write' | 'result' | 'settings'>('write');
   const [resultData, setResultData] = useState<{
     content: string;
     entries: DiaryEntry[];
@@ -24,6 +26,7 @@ function AppInner() {
     const entries = await process(content, mode, aiConfig, targetLang, diaryLang);
     if (entries.length > 0) {
       setResultData({ content, entries, diaryLang, targetLang });
+      setPage('result');
     }
   };
 
@@ -31,14 +34,18 @@ function AppInner() {
     play(text, 'male'); // default to male
   };
 
-  if (resultData) {
+  if (page === 'settings') {
+    return <SettingsPage onBack={() => setPage('write')} />;
+  }
+
+  if (page === 'result' && resultData) {
     return (
       <ResultPage
         content={resultData.content}
         entries={resultData.entries}
         diaryLang={resultData.diaryLang}
         targetLang={resultData.targetLang}
-        onBack={() => setResultData(null)}
+        onBack={() => { setResultData(null); setPage('write'); }}
         onPlayTTS={handlePlayTTS}
       />
     );
@@ -52,7 +59,7 @@ function AppInner() {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'red' }}>{error}</div>;
   }
 
-  return <WritePage onSubmit={handleSubmit} />;
+  return <WritePage onSubmit={handleSubmit} onSettings={() => setPage('settings')} />;
 }
 
 export default function App() {

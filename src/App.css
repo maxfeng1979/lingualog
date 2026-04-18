@@ -162,3 +162,18 @@ body {
 .bubble-actions { display: flex; gap: 6px; }
 .bubble-btn { font-size: 11px; padding: 4px 10px; background: #f3f4f6; border: none; border-radius: 4px; cursor: pointer; }
 .bubble-btn-fav { background: #FEF3C7; border: 1px solid #FCD34D; }
+
+/* SettingsPage */
+.settings-page { display: flex; flex-direction: column; height: 100vh; }
+.settings-header { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--color-border); gap: 12px; }
+.settings-title { flex: 1; font-size: 16px; font-weight: 600; text-align: center; }
+.settings-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.settings-section { border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.settings-section h3 { font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
+.settings-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6b7280; }
+.settings-input, .settings-select { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; }
+.settings-input:focus, .settings-select:focus { border-color: var(--color-primary); }
+.test-btn { padding: 8px 16px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.test-btn:hover { background: #2563EB; }
+.test-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.test-result { font-size: 12px; color: #6b7280; padding: 4px 0; }
