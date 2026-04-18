@@ -6,6 +6,7 @@ import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { LanguageCode } from './constants/languages';
 import { DiaryEntry } from './types/ai';
 import { useAI } from './hooks/useAI';
+import { useTTS } from './hooks/useTTS';
 
 function AppInner() {
   const [resultData, setResultData] = useState<{
@@ -16,6 +17,7 @@ function AppInner() {
   } | null>(null);
   const { aiConfig } = useSettings();
   const { loading, error, process } = useAI();
+  const { play } = useTTS();
 
   const handleSubmit = async (content: string, diaryLang: LanguageCode, targetLang: LanguageCode) => {
     const mode = diaryLang === targetLang ? 'target' : 'diary';
@@ -26,10 +28,7 @@ function AppInner() {
   };
 
   const handlePlayTTS = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      speechSynthesis.speak(utterance);
-    }
+    play(text, 'male'); // default to male
   };
 
   if (resultData) {
