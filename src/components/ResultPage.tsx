@@ -4,6 +4,7 @@ import { Card } from './Card';
 import { WordBubble } from './WordBubble';
 import { DiaryEntry } from '../types/ai';
 import { LanguageCode, LANGUAGES } from '../constants/languages';
+import { buildDiaryMD, exportToFile } from '../services/exportService';
 
 interface ResultPageProps {
   content: string;
@@ -20,11 +21,23 @@ interface WordLookup {
   y: number;
 }
 
-export function ResultPage({ entries, targetLang, onBack, onPlayTTS }: ResultPageProps) {
+export function ResultPage({ content, entries, diaryLang, targetLang, onBack, onPlayTTS }: ResultPageProps) {
   const [globalBlur, setGlobalBlur] = useState(false);
   const [wordLookup, setWordLookup] = useState<WordLookup | null>(null);
   const targetLangLabel = LANGUAGES.find(l => l.code === targetLang)?.label || targetLang;
   const isOrganized = entries[0]?.translated !== undefined;
+
+  const handleExport = async () => {
+    const md = buildDiaryMD(content, entries, diaryLang, targetLang);
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `diary-${date}.md`;
+    try {
+      const savedPath = await exportToFile(filename, md);
+      alert(`已保存: ${savedPath}`);
+    } catch (e: any) {
+      alert(`导出失败: ${e.message || e}`);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: CustomEvent<{ word: string; x: number; y: number }>) => {
@@ -38,6 +51,7 @@ export function ResultPage({ entries, targetLang, onBack, onPlayTTS }: ResultPag
     <div className="result-page">
       <header className="result-header">
         <button className="back-btn" onClick={onBack}>← 返回</button>
+        <button className="icon-btn" title="导出" onClick={handleExport}>📁</button>
         <span className="result-date">日记：{new Date().toLocaleDateString()}</span>
         <div className="header-right">
           <span>遮盖翻译</span>

@@ -36,3 +36,9 @@ export function buildDiaryMD(
 
   return lines.join('\n');
 }
+
+export async function exportToFile(filename: string, content: string): Promise<string> {
+  const { invoke } = await import('@tauri-apps/api/core');
+  await invoke('export_diary', { path: filename, content });
+  return filename;
+}
