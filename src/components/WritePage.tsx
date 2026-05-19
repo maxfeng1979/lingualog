@@ -4,10 +4,10 @@ import { LANGUAGES, LanguageCode, DEFAULT_DIARY_LANG, DEFAULT_TARGET_LANG } from
 
 interface WritePageProps {
   onSubmit: (content: string, diaryLang: LanguageCode, targetLang: LanguageCode) => void;
-  onSettings?: () => void;
+  loading?: boolean;
 }
 
-export function WritePage({ onSubmit, onSettings }: WritePageProps) {
+export function WritePage({ onSubmit, loading }: WritePageProps) {
   const [diaryLang, setDiaryLang] = useState<LanguageCode>(DEFAULT_DIARY_LANG);
   const [targetLang, setTargetLang] = useState<LanguageCode>(DEFAULT_TARGET_LANG);
   const [content, setContent] = useState('');
@@ -22,13 +22,15 @@ export function WritePage({ onSubmit, onSettings }: WritePageProps) {
 
   return (
     <div className="write-page">
-      <header className="write-header">
-        <div style={{ flex: 1 }} />
-        <span className="app-title">LinguaLog</span>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button className="icon-btn" title="历史">📁</button>
-          <button className="icon-btn" title="设置" onClick={onSettings}>⚙️</button>
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner" />
+          <div className="loading-text">AI 正在处理...</div>
         </div>
+      )}
+
+      <header className="write-header">
+        <span className="app-title">LinguaLog</span>
       </header>
 
       <div className="lang-row">
@@ -42,11 +44,12 @@ export function WritePage({ onSubmit, onSettings }: WritePageProps) {
         value={content}
         onChange={e => setContent(e.target.value)}
         placeholder={placeholder}
+        disabled={loading}
       />
 
       <div className="submit-row">
-        <button className="submit-btn" onClick={handleSubmit}>
-          提交 →
+        <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
+          {loading ? '处理中...' : '提交 →'}
         </button>
       </div>
     </div>

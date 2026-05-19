@@ -1,44 +1,65 @@
-// src/components/Card.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DiaryEntry } from '../types/ai';
 
 interface CardProps {
   entry: DiaryEntry;
-  isOrganized: boolean;     // true = diary mode (has translated), false = target mode
+  isOrganized: boolean;
   targetLang: string;
-  globalBlur: boolean;
-  onPlayTTS: (text: string) => void;
-  onFavorite: (text: string, type: 'sentence' | 'word' | 'phrase') => void;
-  onWordSelect: (word: string, x: number, y: number) => void;
+  isBlurred: boolean;
+  globalVersion: number;
+  onPlayTTS: (text: string, gender?: 'male' | 'female') => void;
+  onFavorite: (text: string) => void;
+  onBlurToggle: () => void;
+  isFavorited?: boolean;
+  ttsPlayingKey?: string;
 }
 
-export function Card({ entry, isOrganized, targetLang, globalBlur, onPlayTTS, onFavorite, onWordSelect }: CardProps) {
-  const [localBlur, setLocalBlur] = useState(false);
-  const isBlurred = globalBlur || localBlur;
+export function Card({ entry, isOrganized, targetLang, isBlurred: effectiveBlur, globalVersion, onPlayTTS, onFavorite, onBlurToggle, isFavorited, ttsPlayingKey }: CardProps) {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const displayText = isOrganized ? entry.translated : entry.polished;
 
-  const handleTextMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    if (selectedText && selectedText.length > 0) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      onWordSelect(selectedText, rect.left, rect.bottom + 4);
-    }
+  const [localBlur, setLocalBlur] = useState(effectiveBlur);
+
+  useEffect(() => {
+    setLocalBlur(effectiveBlur);
+  }, [effectiveBlur, globalVersion]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const all = speechSynthesis.getVoices();
+      setVoices(all.filter(v => v.lang.startsWith('en')));
+    };
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }, []);
+
+  const handleLocalToggle = () => {
+    setLocalBlur(!localBlur);
+    onBlurToggle();
   };
 
+  const isPlaying = (gender: 'male' | 'female') => {
+    return ttsPlayingKey === `${displayText}:${gender}`;
+  };
+
+  const hasTwoVoices = voices.length > 1;
+  const isAnyPlaying = hasTwoVoices ? (isPlaying('male') || isPlaying('female')) : isPlaying('male');
+
   return (
-    <div className={`card ${isBlurred ? 'card-blurred' : ''}`}>
+    <div className={`card ${effectiveBlur ? 'card-blurred' : ''}`}>
       <div className="card-toolbar">
-        <button className="card-btn" onClick={() => onPlayTTS(displayText)}>🔊 男声</button>
-        <button className="card-btn" onClick={() => onPlayTTS(displayText)}>🔊 女声</button>
-        <button className="card-btn card-btn-fav" onClick={() => onFavorite(displayText, 'sentence')}>⭐ 收藏</button>
-        <div style={{ flex: 1 }} />
+        {hasTwoVoices ? (
+          <>
+            <button className={`card-btn tts-btn ${isPlaying('male') ? 'tts-active' : ''}`} onClick={() => onPlayTTS(displayText, 'male')} style={{ marginLeft: 'auto' }}>{isPlaying('male') ? '⏹ 男声' : '🔊 男声'}</button>
+            <button className={`card-btn tts-btn ${isPlaying('female') ? 'tts-active' : ''}`} onClick={() => onPlayTTS(displayText, 'female')}>{isPlaying('female') ? '⏹ 女声' : '🔊 女声'}</button>
+          </>
+        ) : (
+          <button className={`card-btn tts-btn ${isPlaying('male') ? 'tts-active' : ''}`} onClick={() => onPlayTTS(displayText)} style={{ marginLeft: 'auto' }}>{isAnyPlaying ? '⏹ 停止' : '🔊 播放'}</button>
+        )}
+        <button className="card-btn card-btn-fav" onClick={() => onFavorite(displayText)}>{isFavorited ? '★ 已收藏' : '☆ 收藏'}</button>
         <div className="blur-toggle">
-          <span>{isBlurred ? '显示' : '遮盖'}</span>
-          <button
-            className={`toggle ${isBlurred ? 'toggle-on' : 'toggle-off'}`}
-            onClick={() => setLocalBlur(!localBlur)}
-          />
+          <span>{effectiveBlur ? '显示' : '遮盖'}</span>
+          <button className={`toggle ${effectiveBlur ? 'toggle-on' : 'toggle-off'}`} onClick={handleLocalToggle} />
         </div>
       </div>
       <div className="card-body">
@@ -56,14 +77,10 @@ export function Card({ entry, isOrganized, targetLang, globalBlur, onPlayTTS, on
         </div>
         <div className="card-right">
           <span className="field-label">{targetLang}</span>
-          <div
-            className={`field-text target-text ${isBlurred ? 'text-blurred' : ''}`}
-            onMouseUp={handleTextMouseUp}
-            style={{ cursor: 'text', userSelect: 'text' }}
-          >
+          <div className={`field-text target-text ${effectiveBlur ? 'text-blurred' : ''}`} style={{ cursor: 'text', userSelect: 'text' }}>
             {displayText}
           </div>
-          {isBlurred && <div className="blur-overlay" />}
+          {effectiveBlur && <div className="blur-overlay" />}
         </div>
       </div>
     </div>

@@ -1,10 +1,13 @@
 export type VoiceGender = 'male' | 'female';
 
-export async function speak(text: string, gender: VoiceGender = 'male'): Promise<void> {
+export async function speak(text: string, gender?: VoiceGender): Promise<void> {
   if (!('speechSynthesis' in window)) {
     console.warn('Web Speech API not supported');
     return;
   }
+
+  // Stop any ongoing speech before starting new one
+  speechSynthesis.cancel();
 
   return new Promise((resolve) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -14,8 +17,13 @@ export async function speak(text: string, gender: VoiceGender = 'male'): Promise
     const voices = speechSynthesis.getVoices();
     const enVoices = voices.filter(v => v.lang.startsWith('en'));
     if (enVoices.length > 0) {
-      // Heuristic: male = index 0, female = index 1 (if available)
-      utterance.voice = gender === 'male' ? enVoices[0] : enVoices[Math.min(1, enVoices.length - 1)];
+      // Pick a different voice for male vs female if available
+      const count = enVoices.length;
+      if (gender === 'female' && count > 1) {
+        utterance.voice = enVoices[Math.min(1, count - 1)];
+      } else {
+        utterance.voice = enVoices[0];
+      }
     }
 
     utterance.onend = () => resolve();
